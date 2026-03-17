@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Digital Forensics Investigation Suite</title>
+
+<style>
+
+body{
+    font-family: Arial;
+    background:#0f172a;
+    color:white;
+    text-align:center;
+}
+
+.container{
+    margin-top:50px;
+}
+
+button{
+    width:250px;
+    padding:15px;
+    margin:10px;
+    font-size:16px;
+    border:none;
+    border-radius:8px;
+    background:#2563eb;
+    color:white;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#1d4ed8;
+}
+
+#time{
+    font-size:18px;
+    margin-bottom:20px;
+    color:#facc15;
+}
+
+#servertime{
+    font-size:16px;
+    margin-bottom:10px;
+    color:#22c55e;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Digital Forensics Investigation Suite</h1>
+
+<div id="servertime">
+Server Time : {{ time }}
+</div>
+
+<div id="time"></div>
+
+<a href="/browser">
+<button>Browser Analysis</button>
+</a>
+<br>
+
+<a href="/usb">
+<button>USB Forensics</button>
+</a>
+<br>
+
+<a href="/hash">
+<button>File Hashing</button>
+</a>
+<br>
+
+<a href="/deleted">
+<button>Deleted Recovery</button>
+</a>
+<br>
+
+<a href="/timeline">
+<button>Timeline Analysis</button>
+</a>
+<br>
+
+<a href="/report">
+<button>Generate Final Report</button>
+</a>
+
+</div>
+
+
+<script>
+
+function updateTime(){
+
+    let now = new Date();
+
+    let day = String(now.getDate()).padStart(2,'0');
+    let month = String(now.getMonth()+1).padStart(2,'0');
+    let year = now.getFullYear();
+
+    let hours = String(now.getHours()).padStart(2,'0');
+    let minutes = String(now.getMinutes()).padStart(2,'0');
+    let seconds = String(now.getSeconds()).padStart(2,'0');
+
+    let time = day + "/" + month + "/" + year + "  " +
+               hours + ":" + minutes + ":" + seconds;
+
+    document.getElementById("time").innerHTML =
+    "Current Time : " + time;
+
+}
+
+setInterval(updateTime,1000);
+updateTime();
+
+</script>
+
+</body>
+</html>

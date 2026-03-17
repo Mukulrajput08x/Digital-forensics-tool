@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>USB Forensics</title>
+</head>
+
+<body>
+
+<h2>USB Device Analysis</h2>
+
+<table border="1">
+
+<tr>
+<th>Device Name</th>
+<th>Serial Number</th>
+<th>Checked Time</th>
+</tr>
+
+{% for item in data %}
+
+<tr>
+<td>{{item["Device Name"]}}</td>
+<td>{{item["Serial Number"]}}</td>
+<td>{{item["Checked Time"]}}</td>
+</tr>
+
+{% endfor %}
+
+</table>
+
+<br>
+<a href="/">Back to Home</a>
+
+</body>
+</html>
