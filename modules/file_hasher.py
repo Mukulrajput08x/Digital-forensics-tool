@@ -1,13 +1,17 @@
 import hashlib
+import os
 
-def hash_file(filename):
+def hash_file(path):
+    if not os.path.exists(path):
+        return "File not found"
 
     md5_hash = hashlib.md5()
     sha256_hash = hashlib.sha256()
 
-    with open(filename,"rb") as f:
+    with open(path, "rb") as file:
         while True:
-            data = f.read(4096)
+            data = file.read(4096)
+
             if not data:
                 break
 
