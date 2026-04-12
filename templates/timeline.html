@@ -1,113 +1,100 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Timeline Analysis</title>
+    <title>Investigation Timeline</title>
+    <style>
+        body {
+            background-color: #081224;
+            color: white;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
 
-<style>
+        h1 {
+            margin: 20px;
+        }
 
-body{
-    font-family: Arial;
-    background:#0f172a;
-    color:white;
-    text-align:center;
-}
+        .current-time {
+            color: gold;
+            font-size: 20px;
+            margin: 20px;
+        }
 
-table{
-    margin:auto;
-    border-collapse: collapse;
-    width:80%;
-}
+        .search-box {
+            margin: 20px;
+        }
 
-th,td{
-    border:1px solid white;
-    padding:10px;
-}
+        .search-box input {
+            width: 320px;
+            padding: 10px;
+            font-size: 16px;
+        }
 
-th{
-    background:#2563eb;
-}
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
 
-#time{
-    color:#facc15;
-    margin-bottom:20px;
-}
+        th, td {
+            border: 1px solid white;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
 
-input{
-    padding:8px;
-    width:300px;
-    margin-bottom:20px;
-}
+        th {
+            background-color: #2f66e0;
+            color: white;
+        }
 
-</style>
+        tr:nth-child(even) {
+            background-color: #0b1730;
+        }
 
+        tr:nth-child(odd) {
+            background-color: #081224;
+        }
+    </style>
 </head>
-
 <body>
 
-<h2>File Activity Timeline</h2>
+    <h1>Investigation Timeline</h1>
+    <div class="current-time">Current Time : {{ time }}</div>
 
-<div id="time">
-Current Time : {{time}}
-</div>
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Search timeline..." onkeyup="searchTable()">
+    </div>
 
-<input type="text" id="search" placeholder="Search File..." onkeyup="searchFile()">
+    <table id="timelineTable">
+        <tr>
+            <th>Time</th>
+            <th>Type</th>
+            <th>Details</th>
+        </tr>
 
-<table id="timelineTable">
+        {% for item in data %}
+        <tr>
+            <td>{{ item["Time"] }}</td>
+            <td>{{ item["Type"] }}</td>
+            <td>{{ item["Details"] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
 
-<tr>
-<th>File</th>
-<th>Created</th>
-<th>Modified</th>
-</tr>
+    <script>
+        function searchTable() {
+            let input = document.getElementById("searchInput").value.toLowerCase();
+            let table = document.getElementById("timelineTable");
+            let tr = table.getElementsByTagName("tr");
 
-{% for item in data %}
-
-<tr>
-<td>{{item.file}}</td>
-<td>{{item.created}}</td>
-<td>{{item.modified}}</td>
-</tr>
-
-{% endfor %}
-
-</table>
-
-<br>
-<a href="/">Back to Home</a>
-
-<script>
-
-function searchFile(){
-
-let input = document.getElementById("search").value.toLowerCase();
-let table = document.getElementById("timelineTable");
-let tr = table.getElementsByTagName("tr");
-
-for(let i=1;i<tr.length;i++){
-
-let td = tr[i].getElementsByTagName("td")[0];
-
-if(td){
-
-let txt = td.textContent || td.innerText;
-
-if(txt.toLowerCase().indexOf(input) > -1){
-
-tr[i].style.display = "";
-
-}else{
-
-tr[i].style.display = "none";
-
-}
-
-}
-
-}
-
-}
-
-</script>
+            for (let i = 1; i < tr.length; i++) {
+                let rowText = tr[i].textContent.toLowerCase();
+                tr[i].style.display = rowText.includes(input) ? "" : "none";
+            }
+        }
+    </script>
 
 </body>
 </html>

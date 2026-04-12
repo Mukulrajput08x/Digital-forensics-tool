@@ -1,60 +1,79 @@
 import os
-from datetime import datetime
+import struct
 import platform
+from datetime import datetime, timedelta
 
-print("Deleted File Recovery Started")
+
+def read_recycle_metadata(i_file_path):
+    try:
+        with open(i_file_path, "rb") as f:
+            data = f.read()
+
+        # Basic validation
+        if len(data) < 28:
+            return None, None, None
+
+        # FILETIME at offset 16:24
+        filetime = struct.unpack("<Q", data[16:24])[0]
+        deleted_time = datetime(1601, 1, 1) + timedelta(microseconds=filetime / 10)
+
+        # Original path usually starts at offset 28 in modern Windows recycle metadata
+        raw_path = data[28:]
+
+        # Decode UTF-16LE and strip nulls
+        original_path = raw_path.decode("utf-16le", errors="ignore").split("\x00")[0].strip()
+
+        # Fallback if decoding fails
+        if not original_path:
+            return None, None, deleted_time.strftime("%d-%m-%Y %I:%M:%S %p")
+
+        original_name = os.path.basename(original_path)
+
+        return original_name, original_path, deleted_time.strftime("%d-%m-%Y %I:%M:%S %p")
+
+    except Exception:
+        return None, None, None
+
 
 def recover_deleted():
     deleted_files = []
-    
-    # Adjust recycle bin path based on OS
-    if platform.system() == "Windows":
-        recycle_bin = r"C:\$Recycle.Bin"
-    else:
-        print("Recycle Bin check only works on Windows")
+
+    if platform.system() != "Windows":
         return deleted_files
-    
-    print("Checking Recycle Bin:", recycle_bin)
-    
+
+    recycle_bin = r"C:\$Recycle.Bin"
+
     if not os.path.exists(recycle_bin):
-        print("Recycle Bin Not Found")
         return deleted_files
-    
+
     for root, dirs, files in os.walk(recycle_bin):
         for file in files:
-            full_path = os.path.join(root, file)
-            
+            if not file.startswith("$I"):
+                continue
+
+            i_file_path = os.path.join(root, file)
+
             try:
-                size = os.path.getsize(full_path)
-                modified_time = datetime.fromtimestamp(
-                    os.path.getmtime(full_path)
-                ).strftime("%d-%m-%Y %I:%M:%S %p")
-                
+                original_name, original_path, deleted_time = read_recycle_metadata(i_file_path)
+
+                # Matching $R file
+                r_file_name = "$R" + file[2:]
+                r_file_path = os.path.join(root, r_file_name)
+                size = os.path.getsize(r_file_path) if os.path.exists(r_file_path) else 0
+
+                deleted_files.append({
+                    "File Name": original_name if original_name else file,
+                    "Location": original_path if original_path else i_file_path,
+                    "Size": size,
+                    "Modified Time": deleted_time if deleted_time else "Unknown"
+                })
+
+            except Exception as e:
                 deleted_files.append({
                     "File Name": file,
-                    "Location": full_path,
-                    "Size": size,
-                    "Modified Time": modified_time
+                    "Location": i_file_path,
+                    "Size": 0,
+                    "Modified Time": f"Error: {e}"
                 })
-                
-            except PermissionError:
-                print("Permission Denied:", full_path)
-            except Exception as e:
-                print("Error Reading File:", full_path)
-                print("Reason:", e)
-    
+
     return deleted_files
-
-results = recover_deleted()
-
-print("""
-===== Deleted Files Found =====
-""")
-print("Total Files:", len(results))
-
-for item in results:
-    print("File Name     :", item["File Name"])
-    print("Location      :", item["Location"])
-    print("Size (Bytes)  :", item["Size"])
-    print("Modified Time :", item["Modified Time"])
-    print("-" * 60)

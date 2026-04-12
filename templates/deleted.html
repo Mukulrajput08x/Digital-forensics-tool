@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Deleted Files</title>
+</head>
+<body>
+
+<h2>Deleted Files Recovery</h2>
+<p>Time: {{ time }}</p>
+
+<table border="1" cellpadding="8">
+    <tr>
+        <th>File Name</th>
+        <th>Location</th>
+        <th>Size (Bytes)</th>
+        <th>Modified Time</th>
+    </tr>
+
+    {% for file in files %}
+    <tr>
+        <td>{{ file["File Name"] }}</td>
+        <td>{{ file["Location"] }}</td>
+        <td>{{ file["Size"] }}</td>
+        <td>{{ file["Modified Time"] }}</td>
+    </tr>
+    {% endfor %}
+
+</table>
+
+<br>
+<a href="/">⬅ Back to Home</a>
+
+</body>
+</html>

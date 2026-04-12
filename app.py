@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_file
 from modules.browser_history import get_browser_history
 from modules.file_hasher import hash_file
 from modules.deleted_recovery import recover_deleted
@@ -7,20 +7,21 @@ from modules.report_generator import generate_report
 from datetime import datetime
 import platform
 import webbrowser
+import threading
 
 app = Flask(__name__)
 
 
-# Safe USB import for Windows/Linux
+# Safe USB import (Windows/Linux)
 if platform.system() == "Windows":
     try:
         from modules.usb_tracker import get_usb_devices
     except Exception:
         def get_usb_devices():
-            return ["USB module error"]
+            return [{"Device Name": "Error", "Friendly Name": "USB module error", "Checked Time": "-"}]
 else:
     def get_usb_devices():
-        return ["USB tracking works only on Windows system"]
+        return [{"Device Name": "Not Supported", "Friendly Name": "USB works only on Windows", "Checked Time": "-"}]
 
 
 def get_time():
@@ -79,51 +80,50 @@ def timeline():
 @app.route("/report", methods=["GET", "POST"])
 def report():
     if request.method == "POST":
-        case_id = request.form["case_id"]
-        case_name = request.form["case_name"]
-        investigator = request.form["investigator"]
-
-        browser_data = get_browser_history()
-        usb_data = get_usb_devices()
-        timeline_data = create_timeline()
-
         try:
-            hashes = hash_file("history_temp.db")
-            md5 = hashes["md5"]
-            sha256 = hashes["sha256"]
-        except Exception:
-            md5 = "Not Available"
-            sha256 = "Not Available"
+            case_id = request.form["case_id"]
+            case_name = request.form["case_name"]
+            investigator = request.form["investigator"]
 
-        file = generate_report(
-            browser_data,
-            usb_data,
-            timeline_data,
-            case_id,
-            case_name,
-            investigator,
-            md5,
-            sha256
-        )
+            browser_data = get_browser_history()
+            usb_data = get_usb_devices()
+            timeline_data = create_timeline()
 
-        return f"""
-        <h2>Report Generated Successfully</h2>
+            try:
+                hashes = hash_file("history_temp.db")
+                md5 = hashes["md5"]
+                sha256 = hashes["sha256"]
+            except Exception:
+                md5 = "Not Available"
+                sha256 = "Not Available"
 
-        Case ID : {case_id} <br>
-        Case Name : {case_name} <br>
-        Investigator : {investigator} <br><br>
+            file_path = generate_report(
+                browser_data,
+                usb_data,
+                timeline_data,
+                case_id,
+                case_name,
+                investigator,
+                md5,
+                sha256
+            )
 
-        MD5 Hash : {md5} <br>
-        SHA256 Hash : {sha256} <br><br>
+            return send_file(file_path, as_attachment=True)
 
-        Saved File : {file} <br><br>
-
-        Time : {get_time()}
-        """
+        except Exception as e:
+            return f"""
+            <h2>Report Generation Failed</h2>
+            Error: {str(e)} <br><br>
+            Time : {get_time()}
+            """
 
     return render_template("report_form.html", time=get_time())
 
 
+def open_browser():
+    webbrowser.open_new("http://127.0.0.1:5000")
+
+
 if __name__ == "__main__":
-    webbrowser.open("http://127.0.0.1:5000")
-    app.run(debug=True)
+    threading.Timer(1.5, open_browser).start()
+    app.run(debug=True, host="127.0.0.1", port=5000, use_reloader=False)

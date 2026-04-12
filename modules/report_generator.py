@@ -1,199 +1,147 @@
-from reportlab.platypus import (
-    SimpleDocTemplate,
-    Paragraph,
-    Spacer,
-    Table,
-    TableStyle,
-    PageBreak
-)
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.pagesizes import A4
-from reportlab.lib import colors
+import os
 from datetime import datetime
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.enums import TA_CENTER
 
 
-def generate_report(
-    browser_data,
-    usb_data,
-    timeline_data,
-    case_id,
-    case_name,
-    investigator,
-    md5,
-    sha256
-):
+def safe_text(value):
+    if value is None:
+        return "N/A"
+    return str(value)
 
-    filename = "forensic_report_" + datetime.now().strftime("%Y%m%d_%H%M%S") + ".pdf"
 
-    pdf = SimpleDocTemplate(filename, pagesize=A4)
+def generate_report(browser_data, usb_data, timeline_data, case_id, case_name, investigator, md5, sha256):
+
+    # 🔥 FIXED PATH (IMPORTANT)
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    report_dir = os.path.join(base_dir, "..", "reports")
+
+    os.makedirs(report_dir, exist_ok=True)
+
+    filename = os.path.join(
+        report_dir,
+        f"forensic_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+    )
 
     styles = getSampleStyleSheet()
+
+    title_style = ParagraphStyle(
+        name="CustomTitle",
+        parent=styles["Title"],
+        alignment=TA_CENTER,
+        fontSize=16,
+        spaceAfter=12
+    )
+
+    section_style = ParagraphStyle(
+        name="SectionHeading",
+        parent=styles["Heading2"],
+        spaceAfter=8
+    )
+
+    normal_style = styles["Normal"]
+
     elements = []
 
-    # =========================
+    generated_time = datetime.now().strftime("%d-%m-%Y %I:%M:%S %p")
+
     # Title
-    # =========================
-    elements.append(
-        Paragraph("Digital Forensics Investigation Report", styles["Title"])
-    )
-    elements.append(Spacer(1, 20))
+    elements.append(Paragraph("Digital Forensics Investigation Report", title_style))
+    elements.append(Spacer(1, 10))
 
-    # =========================
-    # Case Information
-    # =========================
-    elements.append(
-        Paragraph(f"<b>Case ID:</b> {case_id}", styles["Normal"])
-    )
-    elements.append(
-        Paragraph(f"<b>Case Name:</b> {case_name}", styles["Normal"])
-    )
-    elements.append(
-        Paragraph(f"<b>Investigator:</b> {investigator}", styles["Normal"])
-    )
-    elements.append(
-        Paragraph(
-            f"<b>Generated Time:</b> {datetime.now().strftime('%d-%m-%Y %I:%M:%S %p')}",
-            styles["Normal"]
-        )
-    )
-    elements.append(Spacer(1, 20))
+    # Case Details
+    elements.append(Paragraph(f"<b>Case ID:</b> {safe_text(case_id)}", normal_style))
+    elements.append(Paragraph(f"<b>Case Name:</b> {safe_text(case_name)}", normal_style))
+    elements.append(Paragraph(f"<b>Investigator:</b> {safe_text(investigator)}", normal_style))
+    elements.append(Paragraph(f"<b>Generated Time:</b> {generated_time}", normal_style))
+    elements.append(Spacer(1, 12))
 
-    # =========================
     # Hash Values
-    # =========================
-    elements.append(Paragraph("Hash Values", styles["Heading2"]))
-    elements.append(Spacer(1, 10))
+    elements.append(Paragraph("Hash Values", section_style))
+    elements.append(Paragraph(f"<b>MD5:</b> {safe_text(md5)}", normal_style))
+    elements.append(Paragraph(f"<b>SHA256:</b> {safe_text(sha256)}", normal_style))
+    elements.append(Spacer(1, 12))
 
-    elements.append(
-        Paragraph(f"<b>MD5:</b> {md5}", styles["Normal"])
-    )
-    elements.append(
-        Paragraph(f"<b>SHA256:</b> {sha256}", styles["Normal"])
-    )
-    elements.append(Spacer(1, 20))
+    # Browser History
+    elements.append(Paragraph("Browser History", section_style))
 
-    # =========================
-    # Browser History Section
-    # =========================
-    elements.append(Paragraph("Browser History", styles["Heading2"]))
-    elements.append(Spacer(1, 10))
+    browser_table = [["Title", "URL", "Visit Time"]]
+    for item in browser_data[:20]:
+        browser_table.append([
+            Paragraph(safe_text(item.get("title", "N/A")), normal_style),
+            Paragraph(safe_text(item.get("url", "N/A")), normal_style),
+            Paragraph(safe_text(item.get("display_time", item.get("time", "N/A"))), normal_style)
+        ])
 
-    browser_table_data = [["Title", "URL", "Visit Time"]]
-
-    if len(browser_data) == 0:
-        browser_table_data.append(["No Data", "No Data", "No Data"])
-    else:
-        for row in browser_data:
-            browser_table_data.append([
-                str(row.get("title", "N/A"))[:40],
-                str(row.get("url", "N/A"))[:70],
-                str(row.get("time", "N/A"))
-            ])
-
-    browser_table = Table(browser_table_data, colWidths=[140, 240, 120])
-
-    browser_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 11),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
-
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-        ('FONTSIZE', (0, 1), (-1, -1), 9)
+    browser_t = Table(browser_table, colWidths=[120, 250, 110], repeatRows=1)
+    browser_t.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("GRID", (0, 0), (-1, -1), 1, colors.black),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
     ]))
+    elements.append(browser_t)
+    elements.append(Spacer(1, 12))
 
-    elements.append(browser_table)
-    elements.append(Spacer(1, 20))
+    # USB Devices
+    elements.append(Paragraph("USB Device Analysis", section_style))
 
-    # =========================
-    # USB Devices Section
-    # =========================
-    elements.append(Paragraph("USB Device Analysis", styles["Heading2"]))
-    elements.append(Spacer(1, 10))
+    usb_table = [["Device Name", "Friendly Name", "Checked Time"]]
+    for device in usb_data[:10]:
+        usb_table.append([
+            Paragraph(safe_text(device.get("Device Name", "N/A")), normal_style),
+            Paragraph(safe_text(device.get("Friendly Name", "N/A")), normal_style),
+            Paragraph(safe_text(device.get("Checked Time", "N/A")), normal_style)
+        ])
 
-    usb_table_data = [["Device Name", "Checked Time"]]
-
-    if len(usb_data) == 0:
-        usb_table_data.append(["No USB Device Found", "N/A"])
-    else:
-        for row in usb_data:
-            usb_table_data.append([
-                str(row.get("Device Name", "Unknown")),
-                str(row.get("Checked Time", "Unknown"))
-            ])
-
-    usb_table = Table(usb_table_data, colWidths=[250, 220])
-
-    usb_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.darkgreen),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 11),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
-
-        ('BACKGROUND', (0, 1), (-1, -1), colors.lightgreen),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-        ('FONTSIZE', (0, 1), (-1, -1), 9)
+    usb_t = Table(usb_table, colWidths=[180, 220, 100], repeatRows=1)
+    usb_t.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("GRID", (0, 0), (-1, -1), 1, colors.black),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
     ]))
+    elements.append(usb_t)
+    elements.append(Spacer(1, 12))
 
-    elements.append(usb_table)
-    elements.append(Spacer(1, 20))
+    # Timeline
+    elements.append(Paragraph("Investigation Timeline", section_style))
 
-    # =========================
-    # Timeline Section
-    # =========================
-    elements.append(PageBreak())
-    elements.append(Paragraph("Investigation Timeline", styles["Heading2"]))
-    elements.append(Spacer(1, 10))
+    timeline_table = [["Time", "Type", "Details"]]
+    for entry in timeline_data[:20]:
+        timeline_table.append([
+            Paragraph(safe_text(entry.get("Time", "N/A")), normal_style),
+            Paragraph(safe_text(entry.get("Type", "N/A")), normal_style),
+            Paragraph(safe_text(entry.get("Details", "N/A")), normal_style)
+        ])
 
-    timeline_table_data = [["Time", "Type", "Details"]]
-
-    if len(timeline_data) == 0:
-        timeline_table_data.append(["N/A", "N/A", "No Timeline Data"])
-    else:
-        for row in timeline_data:
-            timeline_table_data.append([
-                str(row.get("Time", "N/A")),
-                str(row.get("Type", "N/A")),
-                str(row.get("Details", "N/A"))[:70]
-            ])
-
-    timeline_table = Table(timeline_table_data, colWidths=[140, 90, 240])
-
-    timeline_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.darkred),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 11),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
-
-        ('BACKGROUND', (0, 1), (-1, -1), colors.lavender),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-        ('FONTSIZE', (0, 1), (-1, -1), 9)
+    timeline_t = Table(timeline_table, colWidths=[110, 80, 310], repeatRows=1)
+    timeline_t.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("GRID", (0, 0), (-1, -1), 1, colors.black),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
     ]))
+    elements.append(timeline_t)
+    elements.append(Spacer(1, 12))
 
-    elements.append(timeline_table)
-    elements.append(Spacer(1, 20))
+    # Summary
+    elements.append(Paragraph("Investigation Summary", section_style))
+    elements.append(Paragraph(f"Total Browser Records: {len(browser_data)}", normal_style))
+    elements.append(Paragraph(f"Total USB Devices: {len(usb_data)}", normal_style))
+    elements.append(Paragraph(f"Total Timeline Events: {len(timeline_data)}", normal_style))
 
-    # =========================
-    # Footer / Summary
-    # =========================
-    elements.append(Paragraph("Investigation Summary", styles["Heading2"]))
-    elements.append(Spacer(1, 10))
-
-    summary = f"""
-    Total Browser Records: {len(browser_data)}<br/>
-    Total USB Devices: {len(usb_data)}<br/>
-    Total Timeline Events: {len(timeline_data)}<br/><br/>
-
-    This report was automatically generated by the Digital Forensics Tool.
-    """
-
-    elements.append(Paragraph(summary, styles["Normal"]))
-
-    pdf.build(elements)
+    # 🔥 SAFE PDF BUILD
+    try:
+        doc = SimpleDocTemplate(filename, pagesize=A4)
+        doc.build(elements)
+    except Exception as e:
+        print("PDF Error:", e)
 
     return filename
