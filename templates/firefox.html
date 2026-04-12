@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Firefox Analysis</title>
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            background: #0b1120;
+            color: white;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            width: 700px;
+            margin: 50px auto;
+        }
+        .card {
+            background: #1e293b;
+            padding: 25px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .card:hover {
+            background: #334155;
+        }
+    </style>
+</head>
+<body>
+    <h1>Firefox Analysis</h1>
+    <p>Time: {{ time }}</p>
+
+    <div class="container">
+        <div class="card" onclick="location.href='/browser/firefox/history'">History</div>
+        <div class="card" onclick="location.href='/browser/firefox/downloads'">Downloads</div>
+        <div class="card" onclick="location.href='/browser/firefox/bookmarks'">Bookmarks</div>
+        <div class="card" onclick="location.href='/browser/firefox/cookies'">Cookies</div>
+    </div>
+</body>
+</html>

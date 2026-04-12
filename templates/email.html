@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Email Forensics</title>
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            background: #0b1120;
+            color: white;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            margin-top: 40px;
+        }
+
+        p {
+            color: #cbd5e1;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            width: 900px;
+            margin: 40px auto;
+        }
+
+        .card {
+            background: #1e293b;
+            padding: 25px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .card:hover {
+            background: #334155;
+            transform: scale(1.05);
+        }
+
+        .info {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #94a3b8;
+            font-weight: normal;
+        }
+
+        .back {
+            display: inline-block;
+            margin-top: 30px;
+            color: white;
+            text-decoration: none;
+            border: 1px solid #475569;
+            padding: 8px 15px;
+            border-radius: 6px;
+        }
+
+        .back:hover {
+            background: #1e293b;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>📧 Email Forensics</h1>
+    <p>Time: {{ time }}</p>
+    <p>Analyze Gmail web activity and Outlook artifacts</p>
+
+    <div class="container">
+        <div class="card" onclick="location.href='/email/gmail'">
+            Gmail Activity
+            <div class="info">Gmail related browser activity</div>
+        </div>
+
+        <div class="card" onclick="location.href='/email/outlook-files'">
+            Outlook Files
+            <div class="info">PST / OST mailbox files</div>
+        </div>
+
+        <div class="card" onclick="location.href='/email/outlook-profiles'">
+            Outlook Profiles
+            <div class="info">Configured Outlook profiles</div>
+        </div>
+    </div>
+
+    <a href="/" class="back">⬅ Back to Dashboard</a>
+
+</body>
+</html>

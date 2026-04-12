@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Browser Analysis</title>
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            background: #111827;
+            color: white;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            width: 700px;
+            margin: 50px auto;
+        }
+        .card {
+            background: #1f2937;
+            padding: 30px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .card:hover {
+            background: #374151;
+        }
+    </style>
+</head>
+<body>
+    <h1>Select Browser</h1>
+    <p>Time: {{ time }}</p>
+
+    <div class="container">
+        <div class="card" onclick="location.href='/browser/chrome'">Chrome</div>
+        <div class="card" onclick="location.href='/browser/edge'">Edge</div>
+        <div class="card" onclick="location.href='/browser/firefox'">Firefox</div>
+        <div class="card" onclick="location.href='/browser/opera'">Opera</div>
+    </div>
+</body>
+</html>
